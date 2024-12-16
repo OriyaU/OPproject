@@ -1,0 +1,75 @@
+        -:    0:Source:graph.cpp
+        -:    1:#include "graph.hpp"
+        -:    2:#include <iostream>
+        -:    3:#include <iomanip>
+        -:    4:
+        4:    5:Graph::Graph() : _num_vertices(0), _adj_matrix() {} // Default constructor
+        -:    6:
+        4:    7:Graph::Graph(unsigned int n) : _num_vertices(n), _adj_matrix(n, std::vector<int>(n, NO_EDGE)) {}
+        -:    8:
+        8:    9:Graph::~Graph() = default;
+        -:   10:
+    #####:   11:unsigned int Graph::num_vertices() const {
+    #####:   12:    return _num_vertices;
+        -:   13:}
+        -:   14:
+        8:   15:void Graph::add_edge(unsigned int u, unsigned int v, int weight) {
+        8:   16:    if (u < _num_vertices && v < _num_vertices) {
+        8:   17:        _adj_matrix[u][v] = weight;
+        8:   18:        _adj_matrix[v][u] = weight; // Undirected graph
+        -:   19:    }
+        8:   20:}
+        -:   21:
+        -:   22:// void Graph::add_edge_from_edge(const std::shared_ptr<Edge>& e) {
+        -:   23://     add_edge(e->u(), e->v(), e->weight());
+        -:   24:// }
+        -:   25:
+        2:   26:void Graph::remove_edge(unsigned int u, unsigned int v) {
+        2:   27:    if (u < _num_vertices && v < _num_vertices) {
+        2:   28:        _adj_matrix[u][v] = NO_EDGE;
+        2:   29:        _adj_matrix[v][u] = NO_EDGE;
+        -:   30:    }
+        2:   31:}
+        -:   32:
+    #####:   33:bool Graph::has_edge(unsigned int u, unsigned int v) const {
+    #####:   34:    return u < _num_vertices && v < _num_vertices && _adj_matrix[u][v] != NO_EDGE;
+        -:   35:}
+        -:   36:
+        -:   37:// int Graph::get_weight(unsigned int u, unsigned int v) const {
+        -:   38://     if (u < _num_vertices && v < _num_vertices) {
+        -:   39://         return _adj_matrix[u][v];
+        -:   40://     }
+        -:   41://     return NO_EDGE;
+        -:   42:// }
+        -:   43:
+        4:   44:std::vector<std::vector<int>>& Graph::get_adj_matrix() {
+        4:   45:    return _adj_matrix;
+        -:   46:}
+        -:   47:
+        -:   48:// std::string Graph::print() const {
+        -:   49://     std::ostringstream oss;
+        -:   50:
+        -:   51://     oss << "   ";
+        -:   52://     for (unsigned int i = 0; i < _num_vertices; i++) {
+        -:   53://         oss << std::setw(3) << i;
+        -:   54://     }
+        -:   55://     oss << "\n   ";
+        -:   56://     for (unsigned int i = 0; i < _num_vertices; i++) {
+        -:   57://         oss << "---";
+        -:   58://     }
+        -:   59://     oss << "\n";
+        -:   60:
+        -:   61://     for (unsigned int i = 0; i < _num_vertices; i++) {
+        -:   62://         oss << std::setw(2) << i << "|";
+        -:   63://         for (unsigned int j = 0; j < _num_vertices; j++) {
+        -:   64://             if (_adj_matrix[i][j] == NO_EDGE) {
+        -:   65://                 oss << std::setw(3) << 0; // Represent NO_EDGE as 0
+        -:   66://             } else {
+        -:   67://                 oss << std::setw(3) << _adj_matrix[i][j];
+        -:   68://             }
+        -:   69://         }
+        -:   70://         oss << "\n";
+        -:   71://     }
+        -:   72:
+        -:   73://     return oss.str();
+        -:   74:// }

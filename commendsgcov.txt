@@ -1,0 +1,44 @@
+compile with -fprofile-arcs -ftest-coverage
+*.gcno *.gcda
+
+run 
+ -r : make just the relevant fiels 
+ command:
+gcov -r  graph.cpp  MST.cpp MST_strategy.cpp main.cpp Pipeline.cpp LeaderFollowerPool.cpp  MST_factory.cpp MSTTree.cpp
+
+
+output:
+
+File 'MST.cpp'
+Lines executed:82.35% of 51
+Creating 'MST.cpp.gcov'
+
+File 'MST_strategy.cpp'
+Lines executed:97.96% of 49
+Creating 'MST_strategy.cpp.gcov'
+
+File 'unionfind.hpp'
+No executable lines
+Removing 'unionfind.hpp.gcov'
+
+File 'Pipeline.cpp'
+Lines executed:98.94% of 94
+Creating 'Pipeline.cpp.gcov'
+
+File 'Pipeline.hpp'
+No executable lines
+Removing 'Pipeline.hpp.gcov'
+
+File 'LeaderFollowerPool.cpp'
+Lines executed:98.51% of 67
+Creating 'LeaderFollowerPool.cpp.gcov'
+
+File 'unionfind.cpp'
+Lines executed:94.74% of 19
+Creating 'unionfind.cpp.gcov'
+
+File 'MSTTree.cpp'
+Lines executed:92.45% of 53
+Creating 'MSTTree.cpp.gcov'
+
+Lines executed:94.03% of 352

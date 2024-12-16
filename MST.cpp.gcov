@@ -1,0 +1,134 @@
+        -:    0:Source:MST.cpp
+        -:    1:#include "MST.hpp"
+        -:    2:
+        -:    3:// Default constructor
+       12:    4:MST::MST() : numVertices(0), totalWeight(0), strategy("") {}
+        -:    5:
+        -:    6:// Constructor with adjacency matrix and strategy
+        4:    7:MST::MST(std::vector<std::vector<int>> _adj_matrix, std::string strategy)
+        -:    8:{
+        4:    9:    this->_adj_matrix = _adj_matrix;
+        4:   10:    numVertices = _adj_matrix.size();
+        4:   11:    alldistances = calculateWeightMatrix();
+        4:   12:    this->strategy = strategy;
+        4:   13:}
+        -:   14:
+        -:   15:// Get the underlying graph (as Graph object)
+    #####:   16:const Graph &MST::get_graph() const
+        -:   17:{
+    #####:   18:    static Graph graph(_adj_matrix.size());
+    #####:   19:    for (unsigned int i = 0; i < _adj_matrix.size(); ++i)
+        -:   20:    {
+    #####:   21:        for (unsigned int j = 0; j < _adj_matrix[i].size(); ++j)
+        -:   22:        {
+    #####:   23:            if (_adj_matrix[i][j] != NO_EDGE)
+        -:   24:            {
+    #####:   25:                graph.add_edge(i, j, _adj_matrix[i][j]);
+        -:   26:            }
+        -:   27:        }
+        -:   28:    }
+    #####:   29:    return graph;
+        -:   30:}
+        -:   31:
+        -:   32://Get the total weight of the MST
+    #####:   33:int MST::get_total_weight() const {
+    #####:   34:   return totalWeight;
+        -:   35:}
+        -:   36:
+        -:   37:// Get the adjacency matrix of the MST
+        4:   38:std::vector<std::vector<int>> MST::get_adj_matrix()
+        -:   39:{
+        -:   40:
+        4:   41:    return _adj_matrix;
+        -:   42:}
+        -:   43:
+        -:   44:// Helper to calculate the total weight of the MST
+        2:   45:int MST::calculate_total_weight()
+        -:   46:{
+        -:   47:
+        2:   48:    totalWeight = 0;
+        8:   49:    for (unsigned int i = 0; i < numVertices; ++i)
+        -:   50:    {
+       12:   51:        for (unsigned int j = i + 1; j < numVertices; ++j)
+        -:   52:        { // Avoid double-counting edges
+        6:   53:            if (_adj_matrix[i][j] != NO_EDGE)
+        -:   54:            {
+        4:   55:                totalWeight += _adj_matrix[i][j];
+        -:   56:                //  std::cout << "updates"<<totalWeight<<"/n";
+        -:   57:            }
+        -:   58:        }
+        -:   59:    }
+        2:   60:    MST::totalWeight = totalWeight;
+        2:   61:    return totalWeight;
+        -:   62:}
+        -:   63:
+        2:   64:void MST::setStrategy(std::string s)
+        -:   65:{
+        2:   66:    this->strategy = s;
+        2:   67:}
+        -:   68:
+        -:   69:// DFS helper function to calculate path weight between two vertices
+      120:   70:void MST::dfs_helper(int current, int target, int currentWeight, int &resultWeight, std::vector<bool> &visited)
+        -:   71:{
+      120:   72:    if (current == target)
+        -:   73:    {
+       48:   74:        resultWeight = currentWeight;
+       48:   75:        return;
+        -:   76:    }
+        -:   77:
+       72:   78:    visited[current] = true;
+        -:   79:
+      160:   80:    for (unsigned int i = 0; i < numVertices; ++i)
+        -:   81:    {
+      152:   82:        if (_adj_matrix[current][i] != NO_EDGE && !visited[i])
+        -:   83:        {
+       72:   84:            dfs_helper(i, target, currentWeight + _adj_matrix[current][i], resultWeight, visited);
+       72:   85:            if (resultWeight != -1)
+        -:   86:            { // Stop further DFS if target is found
+       64:   87:                return;
+        -:   88:            }
+        -:   89:        }
+        -:   90:    }
+        -:   91:}
+        -:   92:
+        -:   93:// Calculate the weight matrix for all pairs of vertices
+        8:   94:std::vector<std::vector<int>> MST::calculateWeightMatrix()
+        -:   95:{
+        8:   96:    alldistances = std::vector<std::vector<int>>(numVertices, std::vector<int>(numVertices, -1));
+        -:   97:
+       32:   98:    for (unsigned int i = 0; i < numVertices; ++i)
+        -:   99:    {
+       96:  100:        for (unsigned int j = 0; j < numVertices; ++j)
+        -:  101:        {
+       72:  102:            if (i != j)
+        -:  103:            {
+       48:  104:                std::vector<bool> visited(numVertices, false);
+       48:  105:                int pathWeight = -1;
+       48:  106:                dfs_helper(i, j, 0, pathWeight, visited);
+       48:  107:                alldistances[i][j] = pathWeight;
+       48:  108:            }
+        -:  109:            else
+        -:  110:            {
+       24:  111:                alldistances[i][j] = 0; // Distance to self is zero
+        -:  112:            }
+        -:  113:        }
+        -:  114:    }
+        8:  115:    return alldistances;
+        -:  116:}
+        -:  117:
+        -:  118:// Print the MST graph
+        -:  119:// void MST::print_graph() const
+        -:  120:// {
+        -:  121://     std::cout << "Minimum Spanning Tree (" << strategy << "):\n";
+        -:  122://     for (unsigned int i = 0; i < numVertices; ++i)
+        -:  123://     {
+        -:  124://         for (unsigned int j = i + 1; j < numVertices; ++j)
+        -:  125://         { // Avoid double-printing edges
+        -:  126://             if (_adj_matrix[i][j] != NO_EDGE)
+        -:  127://             {
+        -:  128://                 std::cout << "Edge (" << i << " - " << j << ") Weight: " << _adj_matrix[i][j] << "\n";
+        -:  129://             }
+        -:  130://         }
+        -:  131://     }
+        -:  132://     //  std::cout << "Total Weight: " << totalWeight << "\n";
+        -:  133:// }

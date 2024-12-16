@@ -1,0 +1,31 @@
+        -:    0:Source:unionfind.cpp
+        -:    1:#include "unionfind.hpp"
+        -:    2:
+        4:    3:UnionFind::UnionFind(int size) : parent(size), rank(size, 0) {
+        4:    4:    for (int i = 0; i < size; ++i) {
+        3:    5:        parent[i] = i;
+        -:    6:    }
+        1:    7:}
+        -:    8:
+       10:    9:int UnionFind::find(int x) {
+       10:   10:    if (parent[x] != x) {
+        2:   11:        parent[x] = find(parent[x]); // Path compression
+        -:   12:    }
+       10:   13:    return parent[x];
+        -:   14:}
+        -:   15:
+        2:   16:void UnionFind::unite(int x, int y) {
+        2:   17:    int root_x = find(x);
+        2:   18:    int root_y = find(y);
+        -:   19:
+        2:   20:    if (root_x != root_y) {
+        2:   21:        if (rank[root_x] > rank[root_y]) {
+        1:   22:            parent[root_y] = root_x;
+        1:   23:        } else if (rank[root_x] < rank[root_y]) {
+    #####:   24:            parent[root_x] = root_y;
+        -:   25:        } else {
+        1:   26:            parent[root_y] = root_x;
+        1:   27:            rank[root_x]++;
+        -:   28:        }
+        -:   29:    }
+        2:   30:}

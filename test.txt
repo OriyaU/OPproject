@@ -1,0 +1,7 @@
+Newgraph 3 3 0 1 10 1 2 15 0 2 20
+Newedge 2 0 25
+Removeedge 2 0
+kruskal
+prim
+Leader_Follower
+Pipeline

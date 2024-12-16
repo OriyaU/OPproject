@@ -1,0 +1,113 @@
+        -:    0:Source:LeaderFollowerPool.cpp
+        -:    1:#include "LeaderFollowerPool.hpp"
+        -:    2:#include <chrono>
+        -:    3:#include <iostream>
+        -:    4:#include "MSTTree.hpp"
+        -:    5:#include "MST.hpp"
+        -:    6:using namespace std;
+        -:    7:
+        -:    8:
+        -:    9:// Update constructor to accept shared answer stream and mutex
+        1:   10:LeaderFollowerPool::LeaderFollowerPool(int numThreads, std::mutex& ansMutex)
+        1:   11:    : numThreads_(numThreads), stopFlag_(false), ansMutex(ansMutex), leader_exists(false) {
+        5:   12:    for (int i = 0; i < numThreads_; ++i) {
+        4:   13:       std::thread t(&LeaderFollowerPool::leaderRole, this);  // יצירת thread חדש שמפעיל את leaderRole
+        4:   14:    workers_.push_back(std::move(t));     
+        4:   15:    }
+        1:   16:}
+        1:   17:void LeaderFollowerPool::start() {
+        -:   18:    {
+        1:   19:        lock_guard<mutex> lock(mutexstop);  // Lock the mutex
+        1:   20:        stopFlag_ = false;
+        1:   21:    }
+        1:   22:}
+        -:   23:
+        1:   24:LeaderFollowerPool::~LeaderFollowerPool() {
+        1:   25:    stop();
+        1:   26:}
+        -:   27:
+        1:   28:void LeaderFollowerPool::addEventHandler(void* task) {
+        1:   29:    std::lock_guard<std::mutex> lock(mutexqueue);
+        1:   30:    eventQueue_.push(task);
+        1:   31:    cv_.notify_one();  // Notify the leader thread to handle the event
+        1:   32:}
+        -:   33:
+        1:   34:void LeaderFollowerPool::mainFunction(void* task) {
+        1:   35:    std::lock_guard<std::mutex> lock(ansMutex);  // Lock the shared answer stream
+        -:   36:    MSTTree mst_stats;
+        -:   37:
+        1:   38:    auto* taskTuple = static_cast<tuple<MST* , string* , int>*>(task);
+        -:   39:   
+        1:   40:    MST* clientMST = std::get<0>(*taskTuple);
+        -:   41:  //  string* clientAns = std::get<1>(*taskTuple);
+        1:   42:    int fdclient = std::get<2>(*taskTuple);
+        -:   43:
+        1:   44:    std::ostringstream localAns;  // Local answer stream
+        1:   45:    localAns << "Thread " << std::this_thread::get_id() << "\n";
+        1:   46:    localAns << " Longest path: " << mst_stats.getLongestDistance(*clientMST) << "\n";
+        1:   47:    localAns << " Shortest path: " << mst_stats.getShortestDistance(*clientMST) << "\n";
+        1:   48:    localAns << " Average path: " << mst_stats.getAverageDistance(*clientMST) << "\n";
+        1:   49:    localAns << " Total weight: " << mst_stats.getTotalWeight(*clientMST) << "\n";
+        1:   50:    delete taskTuple;  // Clean up dynamically allocated memory
+        -:   51:
+        -:   52:    // send the response back to the client
+        1:   53:    if (send(fdclient, localAns.str().c_str(), localAns.str().length(), 0) == -1) {
+    #####:   54:        perror("send");
+        -:   55:    }
+        1:   56:}
+        -:   57:// here we role the leader from thread to thread that was sleep until yet
+        4:   58:void LeaderFollowerPool::leaderRole() 
+        -:   59:{
+        -:   60:    while (true) {
+        5:   61:        void* task = nullptr;
+        -:   62:        {
+        5:   63:            std::unique_lock<std::mutex> lock(mutexqueue);
+        5:   64:            cv_.wait(lock, [this] {
+       11:   65:                std::lock_guard<std::mutex> stopLock(mutexstop);  // Lock mutexstop for stopFlag_ check and we don't want any other thread change the stopFlag when we check the flag.
+       22:   66:                return (!eventQueue_.empty() && !leader_exists) || stopFlag_;
+       11:   67:            });
+        -:   68:            
+        5:   69:           leader_exists = true;
+        -:   70:
+        5:   71:            if (stopFlag_ && eventQueue_.empty()) {
+        8:   72:                return;  // Shutdown check
+        -:   73:            }
+        -:   74:
+        1:   75:            if (!eventQueue_.empty()) {
+        -:   76:                // Get the next task
+        1:   77:                task = std::move(eventQueue_.front());
+        1:   78:                eventQueue_.pop();
+        1:   79:                leader_exists = false;
+        -:   80:                // Notify other threads that a new leader can be elected
+        1:   81:                followerRole();
+        -:   82:             }
+        5:   83:        }
+        -:   84:
+        -:   85:        // Execute the task outside the lock
+        1:   86:        if (task) {
+        1:   87:            mainFunction(task);
+        -:   88:        }
+        1:   89:    }
+        -:   90:}
+        -:   91:
+        1:   92:void LeaderFollowerPool::followerRole() {
+        1:   93:    cv_.notify_one();  // Wake up next thread to be leader
+        1:   94:}
+        -:   95:
+        -:   96:// Method to gracefully stop the thread pool
+        1:   97:void LeaderFollowerPool::stop() {
+        -:   98:    {
+        1:   99:        std::lock_guard<std::mutex> lock(mutexqueue);  // Lock the mutex for the stop
+        1:  100:        stopFlag_ = true;
+        1:  101:        cv_.notify_all();  // Notify all waiting threads with the lock held
+        1:  102:    }
+        -:  103:
+        5:  104:    for (auto& worker : workers_) {
+        4:  105:        if (worker.joinable()) {
+        4:  106:            worker.join();  // Wait for all worker threads to finish
+        -:  107:        }
+        -:  108:    }
+        1:  109:    workers_.clear();  // Clear the worker threads vector
+        -:  110:
+        -:  111:    // cout << "LeaderFollowerPool stopped all worker threads." << endl;
+        1:  112:}

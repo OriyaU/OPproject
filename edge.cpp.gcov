@@ -1,0 +1,31 @@
+        -:    0:Source:edge.cpp
+        -:    1:#include "edge.hpp"
+        -:    2:
+    #####:    3:Edge::Edge(unsigned int u, unsigned int v, int weight)
+    #####:    4:    : _u(u), _v(v), _weight(weight) {}
+        -:    5:
+    #####:    6:unsigned int Edge::u() const {
+    #####:    7:    return _u;
+        -:    8:}
+        -:    9:
+    #####:   10:unsigned int Edge::v() const {
+    #####:   11:    return _v;
+        -:   12:}
+        -:   13:
+    #####:   14:int Edge::weight() const {
+    #####:   15:    return _weight;
+        -:   16:}
+        -:   17:
+    #####:   18:unsigned int Edge::get_other(unsigned int vertex) const {
+    #####:   19:    if (vertex == _u) {
+    #####:   20:        return _v;
+    #####:   21:    } else if (vertex == _v) {
+    #####:   22:        return _u;
+        -:   23:    } else {
+    #####:   24:        return static_cast<unsigned int>(-1);
+        -:   25:    }
+        -:   26:}
+        -:   27:
+    #####:   28:bool Edge::compare(const std::shared_ptr<Edge>& a, const std::shared_ptr<Edge>& b) {
+    #####:   29:    return a->_weight < b->_weight;
+        -:   30:}

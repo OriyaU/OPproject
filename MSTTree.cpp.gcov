@@ -1,0 +1,100 @@
+        -:    0:Source:MSTTree.cpp
+        -:    1:#include "MSTTree.hpp"
+        -:    2:#include <limits>
+        -:    3:#include <vector>
+        -:    4:#include <queue>
+        -:    5:#include <numeric>
+        -:    6:#include <algorithm>
+        -:    7:#include <functional>
+        -:    8:
+        -:    9:// Calculate the total weight of the MST
+        2:   10:int MSTTree::getTotalWeight( MST& mst) {
+        2:   11:    int x=mst.calculate_total_weight();
+        2:   12:    return x;
+        -:   13:}
+        -:   14:
+        -:   15:// Find the longest distance in the MST using a double DFS
+        2:   16:int MSTTree::getLongestDistance(MST& mst) {
+        2:   17:    auto adjMatrix = mst.get_adj_matrix();
+        2:   18:    unsigned int n = adjMatrix.size();
+        -:   19:
+        2:   20:    if (n == 0) {
+    #####:   21:        return 0;
+        -:   22:    }
+        -:   23:
+        -:   24:    // Helper function for DFS to calculate distances
+        4:   25:    auto dfs = [&](unsigned int start, int& farthestNode, std::vector<int>& distances) {
+        4:   26:        std::vector<bool> visited(n, false);
+    #####:   27:        std::function<void(int, int)> dfsRecursive = [&](int node, int currentDistance) {
+       12:   28:            visited[node] = true;
+       12:   29:            distances[node] = currentDistance;
+       48:   30:            for (unsigned int i = 0; i < n; ++i) {
+       36:   31:                if (adjMatrix[node][i] != NO_EDGE && !visited[i]) {
+        8:   32:                    dfsRecursive(i, currentDistance + adjMatrix[node][i]);
+        -:   33:                }
+        -:   34:            }
+       16:   35:        };
+        -:   36:
+        4:   37:        dfsRecursive(start, 0);
+        -:   38:
+        -:   39:        // Find the farthest node
+        4:   40:        farthestNode = std::distance(distances.begin(), std::max_element(distances.begin(), distances.end()));
+        4:   41:    };
+        -:   42:
+        2:   43:    int farthestNode = 0;
+        2:   44:    std::vector<int> distances(n, 0);
+        -:   45:
+        -:   46:    // First DFS to find the farthest node from an arbitrary start
+        2:   47:    dfs(0, farthestNode, distances);
+        -:   48:
+        -:   49:    // Second DFS from the farthest node to calculate the longest path
+        2:   50:    std::fill(distances.begin(), distances.end(), 0);
+        2:   51:    dfs(farthestNode, farthestNode, distances);
+        -:   52:
+        2:   53:    return *std::max_element(distances.begin(), distances.end());
+        2:   54:}
+        -:   55:
+        -:   56:// Calculate the average distance between all pairs of vertices in the MST
+        2:   57:double MSTTree::getAverageDistance(MST& mst) {
+        2:   58:    auto weightMatrix = mst.calculateWeightMatrix();
+        2:   59:    unsigned int n = weightMatrix.size();
+        -:   60:
+        2:   61:    if (n == 0) {
+    #####:   62:        return 0.0;
+        -:   63:    }
+        -:   64:
+        2:   65:    unsigned long long totalDistance = 0;
+        2:   66:    unsigned int count = 0;
+        -:   67:
+        8:   68:    for (unsigned int i = 0; i < n; ++i) {
+       24:   69:        for (unsigned int j = 0; j < n; ++j) {
+       18:   70:            if (weightMatrix[i][j] != -1) {
+       18:   71:                totalDistance += weightMatrix[i][j];
+       18:   72:                ++count;
+        -:   73:            }
+        -:   74:        }
+        -:   75:    }
+        -:   76:
+        2:   77:    return static_cast<double>(totalDistance) / count;
+        2:   78:}
+        -:   79:
+        -:   80:// Find the shortest distance between two nodes in the MST
+        2:   81:int MSTTree::getShortestDistance(MST& mst) {
+        2:   82:    auto weightMatrix = mst.calculateWeightMatrix();
+        2:   83:    unsigned int n = weightMatrix.size();
+        -:   84:
+        2:   85:    if (n == 0) {
+    #####:   86:        return 0;
+        -:   87:    }
+        -:   88:
+        2:   89:    int shortestDistance = std::numeric_limits<int>::max();
+        8:   90:    for (unsigned int i = 0; i < n; ++i) {
+       12:   91:        for (unsigned int j = i + 1; j < n; ++j) {
+        6:   92:            if (weightMatrix[i][j] != -1) {
+        6:   93:                shortestDistance = std::min(shortestDistance, weightMatrix[i][j]);
+        -:   94:            }
+        -:   95:        }
+        -:   96:    }
+        -:   97:
+       2*:   98:    return shortestDistance == std::numeric_limits<int>::max() ? 0 : shortestDistance;
+        2:   99:}
